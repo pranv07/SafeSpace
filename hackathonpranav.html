@@ -1,0 +1,635 @@
+by pranav, aarush, ayaan
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeSpace AI - Hackathon 2K25</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+    background: linear-gradient(to right, #fceabb, #f8b500);
+    color: #3e2723; /* brown text */
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #3e2723; /* brown headings */
+  }
+  .container {
+    max-width: 900px;
+    margin: auto;
+    padding: 30px;
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    min-height: 90vh;
+    color: #3e2723;
+  }
+  .hidden { display: none; }
+  input, select, button, textarea {
+    font-size: 16px;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    color: #3e2723;
+  }
+  input, select, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255 255 255 / 0.9);
+  }
+  button {
+    background-color: #f8b500;
+    color: #3e2723;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+  }
+  button:hover {
+    background-color: #d18f00;
+  }
+  .chat-box, .public-board, .meme-gallery, .game-board {
+    background: rgba(255 255 255 / 0.7);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    color: #3e2723;
+  }
+  .message {
+    margin: 12px 0;
+    word-wrap: break-word;
+  }
+  .user { color: #8d6e63; font-weight: bold; } /* brownish */
+  .ai { color: #6d4c41; font-weight: bold; }   /* darker brown */
+  .reply-button {
+    font-size: 12px;
+    margin-left: 10px;
+    cursor: pointer;
+    color: #a1887f;
+  }
+  .info-section ul { padding-left: 20px; }
+  .meme-gallery img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 8px #d18f00;
+  }
+  .tic-tac-toe {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    gap: 5px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .tic-tac-toe div {
+    width: 100px;
+    height: 100px;
+    font-size: 32px;
+    text-align: center;
+    line-height: 100px;
+    border: 2px solid #d18f00;
+    cursor: pointer;
+    background: rgba(255 255 255 / 0.7);
+    color: #6d4c41; /* brown for X and O */
+    transition: background 0.3s ease;
+    user-select: none;
+    font-weight: bold;
+  }
+  .tic-tac-toe div:hover {
+    background: rgba(255 255 255 / 0.9);
+  }
+  /* Login & Signup page styles */
+  #authPage {
+    max-width: 400px;
+    margin: 80px auto;
+    background: rgba(255 255 255 / 0.8);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    color: #3e2723;
+    text-align: center;
+  }
+  #authPage input {
+    margin-bottom: 20px;
+    background: #fff;
+  }
+  #toggleAuth {
+    margin-top: 15px;
+    color: #d18f00;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  #welcome {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #6d4c41;
+  }
+  /* Status messages for games */
+  #gameStatus, #guessResult, #rpsResult {
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  #anonymousLabel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    color: #6d4c41;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #anonymousLabel input {
+    margin-right: 8px;
+  }
+  /* Sign out button style */
+  #signOutBtn {
+    float: right;
+    background-color: #d18f00;
+    margin-bottom: 20px;
+  }
+  #signOutBtn:hover {
+    background-color: #b07400;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN / SIGNUP PAGE -->
+<div id="authPage">
+  <h2 id="authTitle">Login to SafeSpace AI</h2>
+  <input type="text" id="username" placeholder="Enter your username" autocomplete="off" />
+  <input type="password" id="password" placeholder="Enter your password" autocomplete="off" />
+  <div id="anonymousLabel">
+    <input type="checkbox" id="anonymousCheckbox" />
+    <label for="anonymousCheckbox">Chat anonymously (no login required)</label>
+  </div>
+  <button onclick="handleAuth()">Login</button>
+  <p id="authError" style="color:#c62828; margin-top:12px;"></p>
+  <p id="toggleAuth">Don't have an account? Sign up here</p>
+</div>
+
+<!-- MAIN APP -->
+<div class="container hidden" id="mainApp">
+
+  <!-- SIGN OUT BUTTON -->
+  <button id="signOutBtn" onclick="signOut()">Sign Out</button> <!-- SIGN OUT FEATURE -->
+
+  <h2>SafeSpace AI Chat</h2>
+  <label for="category">Choose a category:</label>
+  <select id="category">
+    <option value="Academic">Academic</option>
+    <option value="Emotional">Emotional</option>
+    <option value="Social">Social</option>
+  </select>
+
+  <div class="chat-box" id="chatBox"></div>
+
+  <input type="text" id="userInput" placeholder="Type your message here" style="width: 80%;" />
+  <button onclick="sendMessage()">Send to AI</button>
+  <button onclick="postPublicComment()">Post to Public</button>
+  <button onclick="document.getElementById('games').scrollIntoView({behavior: 'smooth'})">Games</button>
+  <button onclick="document.getElementById('memes').scrollIntoView({behavior: 'smooth'})">Memes</button>
+
+  <div class="public-board" id="publicBoard"></div>
+
+  <div class="info-section">
+    <h4>Advice on Bullying:</h4>
+    <p>You're not alone. Speak to a trusted adult or school counselor. Keep a record, and remember – you're stronger than you know.</p>
+    <h4>Jokes to Cheer You Up:</h4>
+    <ul>
+      <li>Why don't scientists trust atoms? Because they make up everything!</li>
+      <li>I told my computer I needed a break, and now it won’t stop sending me beach pics.</li>
+    </ul>
+    <h4>Series & Movies:</h4>
+    <ul>
+      <li>Stranger Things</li>
+      <li>Brooklyn Nine-Nine</li>
+      <li>Spirited Away</li>
+    </ul>
+    <h4>Call Center Helplines:</h4>
+    <p><strong>+65 94810250</strong><br /><strong>+65 88590794</strong></p>
+  </div>
+
+  <div class="game-board" id="games">
+    <h3>Tic Tac Toe</h3>
+    <div class="tic-tac-toe" id="ticTacToeBoard"></div>
+    <p id="gameStatus"></p>
+    <button onclick="resetTicTacToe()">Reset</button>
+
+    <h3>Number Guessing Game</h3>
+    <input type="number" id="guess" placeholder="Guess a number (1-10)" min="1" max="10" />
+    <button onclick="checkGuess()">Submit Guess</button>
+    <p id="guessResult"></p>
+
+    <h3>Rock Paper Scissors</h3>
+    <button onclick="playRPS('Rock')">Rock</button>
+    <button onclick="playRPS('Paper')">Paper</button>
+    <button onclick="playRPS('Scissors')">Scissors</button>
+    <p id="rpsResult"></p>
+  </div>
+
+  <div class="meme-gallery" id="memes">
+    <h3>Meme Gallery</h3>
+    <img src="https://i.imgflip.com/30b1gx.jpg" alt="Meme 1" />
+    <img src="https://i.imgflip.com/4/4t0m5.jpg" alt="Meme 2" />
+    <img src="https://i.imgflip.com/26am.jpg" alt="Meme 3" />
+    <img src="https://i.imgflip.com/1bij.jpg" alt="Meme 4" />
+    <img src="https://i.imgflip.com/3si4.jpg" alt="Meme 5" />
+    <img src="https://i.imgflip.com/2/1ur9b0.jpg" alt="Meme 6" />
+    <img src="https://i.imgflip.com/1otk96.jpg" alt="Meme 7" />
+    <img src="https://i.imgflip.com/9ehk.jpg" alt="Meme 8" />
+    <img src="https://i.imgflip.com/1h7in3.jpg" alt="Meme 9" />
+    <img src="https://i.imgflip.com/3pnmg.jpg" alt="Meme 10" />
+  </div>
+</div>
+
+<script>
+  // --- LocalStorage helpers ---
+  function saveToStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function loadFromStorage(key, defaultValue) {
+    const data = localStorage.getItem(key);
+    if (data) {
+      try {
+        return JSON.parse(data);
+      } catch {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  }
+
+  // Load or initialize userDB from localStorage
+  let userDB = loadFromStorage('userDB', {
+    "user1": "pass123",
+    "testuser": "password",
+    "admin": "adminpass"
+  });
+
+  // Save userDB back anytime it's changed
+  function saveUserDB() {
+    saveToStorage('userDB', userDB);
+  }
+
+  // Store logged-in user, or null if none
+  let loggedInUser = loadFromStorage('loggedInUser', null);
+
+  // Memory for chat & public comments per user
+  // Structure: { username: [ {sender:"user"/"ai", text:"..."} ] }
+  let chatMemory = loadFromStorage('chatMemory', {});
+
+  // Structure: public comments - array of {user: "username", text: "...", replies: []}
+  let publicComments = loadFromStorage('publicComments', []);
+
+  // Update localStorage after chat or comments changes
+  function saveChatMemory() {
+    saveToStorage('chatMemory', chatMemory);
+  }
+
+  function savePublicComments() {
+    saveToStorage('publicComments', publicComments);
+  }
+
+  // DOM elements
+  const authTitle = document.getElementById("authTitle");
+  const toggleAuthText = document.getElementById("toggleAuth");
+  const authError = document.getElementById("authError");
+  const chatBox = document.getElementById("chatBox");
+  const publicBoard = document.getElementById("publicBoard");
+  const anonymousCheckbox = document.getElementById("anonymousCheckbox");
+
+  let isLoginMode = true; // toggles between login and signup
+
+  toggleAuthText.onclick = () => {
+    isLoginMode = !isLoginMode;
+    authError.textContent = "";
+    anonymousCheckbox.checked = false;
+    anonymousCheckbox.disabled = false;
+    document.getElementById("username").disabled = false;
+    document.getElementById("password").disabled = false;
+    if (isLoginMode) {
+      authTitle.textContent = "Login to SafeSpace AI";
+      toggleAuthText.textContent = "Don't have an account? Sign up here";
+      document.querySelector("#authPage button").textContent = "Login";
+    } else {
+      authTitle.textContent = "Sign Up for SafeSpace AI";
+      toggleAuthText.textContent = "Already have an account? Login here";
+      document.querySelector("#authPage button").textContent = "Sign Up";
+    }
+  };
+
+  // Disable username/password if anonymous checked
+  anonymousCheckbox.onchange = () => {
+    if (anonymousCheckbox.checked) {
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("username").disabled = true;
+      document.getElementById("password").disabled = true;
+      authError.textContent = "";
+    } else {
+      document.getElementById("username").disabled = false;
+      document.getElementById("password").disabled = false;
+    }
+  };
+
+  function handleAuth() {
+    const isAnonymous = anonymousCheckbox.checked;
+    if (isAnonymous) {
+      loggedInUser = "Anonymous";
+      saveToStorage('loggedInUser', loggedInUser);
+      authError.textContent = "";
+      showMainApp();
+      return;
+    }
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    authError.textContent = "";
+
+    if (!username || !password) {
+      authError.textContent = "Please enter username and password.";
+      return;
+    }
+
+    if (isLoginMode) {
+      // Login flow
+      if (userDB[username] && userDB[username] === password) {
+        loggedInUser = username;
+        saveToStorage('loggedInUser', loggedInUser);
+        authError.textContent = "";
+        showMainApp();
+      } else {
+        authError.textContent = "Invalid username or password.";
+      }
+    } else {
+      // Sign Up flow
+      if (userDB[username]) {
+        authError.textContent = "Username already exists. Please choose another.";
+        return;
+      }
+      userDB[username] = password;
+      saveUserDB();
+      loggedInUser = username;
+      saveToStorage('loggedInUser', loggedInUser);
+      authError.textContent = "";
+      showMainApp();
+    }
+  }
+
+  function showMainApp() {
+    document.getElementById("authPage").classList.add("hidden");
+    document.getElementById("mainApp").classList.remove("hidden");
+    loadUserChat();
+    loadPublicComments();
+    appendMessage(`Welcome ${loggedInUser}! You can now chat and comment.`, "ai");
+    // Disable public commenting if anonymous
+    document.querySelector("button[onclick='postPublicComment()']").disabled = (loggedInUser === "Anonymous");
+  }
+
+  // SIGN OUT FEATURE
+  function signOut() {
+    loggedInUser = null;
+    saveToStorage('loggedInUser', null);
+    chatBox.innerHTML = "";
+    publicBoard.innerHTML = "";
+    document.getElementById("userInput").value = "";
+    document.getElementById("guess").value = "";
+    document.getElementById("guessResult").textContent = "";
+    document.getElementById("gameStatus").textContent = "";
+    document.getElementById("rpsResult").textContent = "";
+    document.getElementById("mainApp").classList.add("hidden");
+    document.getElementById("authPage").classList.remove("hidden");
+  }
+
+  // Load user's chat history to chat box
+  function loadUserChat() {
+    chatBox.innerHTML = "";
+    if (chatMemory[loggedInUser]) {
+      chatMemory[loggedInUser].forEach(msg => {
+        appendMessage(msg.text, msg.sender);
+      });
+    }
+  }
+
+  // Append message and save in chatMemory
+  function appendMessage(text, sender) {
+    const div = document.createElement("div");
+    div.className = `message ${sender}`;
+    div.textContent = `${sender === 'user' ? (loggedInUser || 'You') : 'AI'}: ${text}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Save in chatMemory only if user or AI
+    if (sender === "user" || sender === "ai") {
+      if (!chatMemory[loggedInUser]) chatMemory[loggedInUser] = [];
+      chatMemory[loggedInUser].push({ sender, text });
+      saveChatMemory();
+    }
+  }
+
+  // AI Chat & Mood Tracking
+  const userInput = document.getElementById("userInput");
+
+  function detectEmotion(msg) {
+    msg = msg.toLowerCase();
+    if (msg.match(/sad|tired|depressed|down/)) return "Sad";
+    if (msg.match(/angry|mad|rage/)) return "Angry";
+    if (msg.match(/anxious|scared|nervous/)) return "Anxious";
+    if (msg.match(/happy|great|awesome|good/)) return "Happy";
+    return "Neutral";
+  }
+
+  function getAIResponse(category, msg) {
+    const emotion = detectEmotion(msg);
+    // Basic canned replies for demo
+    let baseReplies = {
+      "Academic": "Keep up the good work on your studies!",
+      "Emotional": "I'm here for you. Remember, every feeling passes.",
+      "Social": "Friendships take work, but you're not alone."
+    };
+    let response = baseReplies[category] || "Tell me more.";
+    if (emotion !== "Neutral") response += ` I sense you're feeling ${emotion.toLowerCase()}.`;
+    return response;
+  }
+
+  function sendMessage() {
+    if (!loggedInUser) {
+      alert("Please login or sign up to chat.");
+      return;
+    }
+    const msg = userInput.value.trim();
+    if (!msg) return;
+    const category = document.getElementById("category").value;
+    appendMessage(msg, "user");
+    const reply = getAIResponse(category, msg);
+    appendMessage(reply, "ai");
+    userInput.value = "";
+  }
+
+  // Public comments - only logged in users, no anonymous
+  function loadPublicComments() {
+    publicBoard.innerHTML = "<h4>Public Comment Board</h4>";
+    publicComments.forEach((comment, index) => {
+      const div = document.createElement("div");
+      div.className = "message user";
+      div.style.borderBottom = "1px solid #d18f00";
+      div.style.padding = "8px 0";
+      div.innerHTML = `<strong>${comment.user}</strong>: ${comment.text} <span class="reply-button" onclick="replyToPublic(${index})">Reply</span>`;
+      comment.replies.forEach(replyText => {
+        const replyDiv = document.createElement("div");
+        replyDiv.className = "message ai";
+        replyDiv.style.marginLeft = "20px";
+        replyDiv.textContent = `Reply: ${replyText}`;
+        div.appendChild(replyDiv);
+      });
+      publicBoard.appendChild(div);
+    });
+    publicBoard.scrollTop = publicBoard.scrollHeight;
+  }
+
+  function postPublicComment() {
+    if (!loggedInUser || loggedInUser === "Anonymous") {
+      alert("Please login (non-anonymously) to post public comments.");
+      return;
+    }
+    const msg = userInput.value.trim();
+    if (!msg) return;
+    publicComments.push({ user: loggedInUser, text: msg, replies: [] });
+    savePublicComments();
+    loadPublicComments();
+    userInput.value = "";
+  }
+
+  function replyToPublic(index) {
+    if (!loggedInUser || loggedInUser === "Anonymous") {
+      alert("Please login (non-anonymously) to reply.");
+      return;
+    }
+    const reply = prompt("Write your reply:");
+    if (reply) {
+      publicComments[index].replies.push(reply);
+      savePublicComments();
+      loadPublicComments();
+    }
+  }
+
+  // --- Tic Tac Toe Game ---
+  let board = ["", "", "", "", "", "", "", "", ""];
+  let currentPlayer = "X";
+
+  function renderTicTacToe() {
+    const boardDiv = document.getElementById("ticTacToeBoard");
+    boardDiv.innerHTML = "";
+    board.forEach((cell, i) => {
+      const square = document.createElement("div");
+      square.textContent = cell;
+      square.onclick = () => handleMove(i);
+      boardDiv.appendChild(square);
+    });
+  }
+
+  function handleMove(index) {
+    if (board[index] !== "") return;
+    board[index] = currentPlayer;
+    renderTicTacToe();
+    if (checkWin()) {
+      document.getElementById("gameStatus").style.color = "#6d4c41"; // brown
+      document.getElementById("gameStatus").textContent = `${currentPlayer} wins!`;
+      return;
+    }
+    if (board.every(cell => cell !== "")) {
+      document.getElementById("gameStatus").style.color = "#d18f00"; // yellowish
+      document.getElementById("gameStatus").textContent = "It's a draw!";
+      return;
+    }
+    currentPlayer = currentPlayer === "X" ? "O" : "X";
+  }
+
+  function checkWin() {
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    return wins.some(comb => comb.every(i => board[i] === currentPlayer));
+  }
+
+  function resetTicTacToe() {
+    board = ["", "", "", "", "", "", "", "", ""];
+    currentPlayer = "X";
+    document.getElementById("gameStatus").textContent = "";
+    renderTicTacToe();
+  }
+
+  // --- Number Guessing Game ---
+  let targetNumber = Math.floor(Math.random() * 10) + 1;
+
+  function checkGuess() {
+    const guessInput = document.getElementById("guess");
+    const guess = parseInt(guessInput.value);
+    if (isNaN(guess) || guess < 1 || guess > 10) {
+      document.getElementById("guessResult").style.color = "#c62828"; // red for error
+      document.getElementById("guessResult").textContent = "Please enter a number between 1 and 10.";
+      return;
+    }
+    if (guess === targetNumber) {
+      document.getElementById("guessResult").style.color = "#6d4c41"; // brown success
+      document.getElementById("guessResult").textContent = "Correct! 🎉 Starting a new game.";
+      targetNumber = Math.floor(Math.random() * 10) + 1;
+    } else if (guess < targetNumber) {
+      document.getElementById("guessResult").style.color = "#d18f00";
+      document.getElementById("guessResult").textContent = "Too low! Try again.";
+    } else {
+      document.getElementById("guessResult").style.color = "#d18f00";
+      document.getElementById("guessResult").textContent = "Too high! Try again.";
+    }
+  }
+
+  // --- Rock Paper Scissors ---
+  function playRPS(userChoice) {
+    const choices = ["Rock", "Paper", "Scissors"];
+    const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+    let result = "";
+
+    if (userChoice === aiChoice) result = "It's a tie!";
+    else if (
+      (userChoice === "Rock" && aiChoice === "Scissors") ||
+      (userChoice === "Paper" && aiChoice === "Rock") ||
+      (userChoice === "Scissors" && aiChoice === "Paper")
+    ) {
+      result = "You win!";
+    } else {
+      result = "You lose!";
+    }
+
+    const resultText = `You chose ${userChoice}, AI chose ${aiChoice}. ${result}`;
+    const rpsResult = document.getElementById("rpsResult");
+    rpsResult.style.color = result.includes("win") ? "#6d4c41" : (result.includes("lose") ? "#c62828" : "#d18f00");
+    rpsResult.textContent = resultText;
+  }
+
+  // On page load, check if user logged in
+  window.onload = () => {
+    if (loggedInUser) {
+      if (loggedInUser === "Anonymous") {
+        anonymousCheckbox.checked = true;
+        document.getElementById("username").disabled = true;
+        document.getElementById("password").disabled = true;
+      }
+      showMainApp();
+    }
+    renderTicTacToe();
+  };
+</script>
+</body>
+</html>
